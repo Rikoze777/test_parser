@@ -1,25 +1,37 @@
 import aiohttp
-import asyncio
 import json
 
 
-async def main():
+async def get_bet_response(headers: dict) -> str:
     async with aiohttp.ClientSession() as session:
-        user_agent = "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:124.0) Gecko/20100101 Firefox/124.0"
-        bet_headers = {
-            "Accept": "application/json, text/plain, */*",
-            "Accept-Encoding": "gzip, deflate, br",
-            "Accept-Language": "ru-RU,ru;q=0.8,en-US;q=0.5,en;q=0.3",
-            "User-Agent": user_agent,
-        }
-        bet_url = "https://www.olimp.bet/api/v4/0/line/sports-with-competitions-with-events?vids[]=1:"
-        async with session.get(bet_url, headers=bet_headers) as response:
-            html = await response.text()
-            response_json = json.loads(html)
-
-            with open("olimp_bet.json", "w", encoding="utf-8") as file:
-                json.dump(response_json, file, ensure_ascii=False)
+        bet_live_url = "https://www.olimp.bet/api/v4/0/live/sports-with-competitions-with-events?vids[]=1:"
+        async with session.get(bet_live_url, headers=headers) as response:
+            response_text = await response.text()
+            return response_text
 
 
-if __name__ == "__main__":
-    asyncio.run(main())
+async def get_bet_result(response_text: str) -> dict:
+    response_json = json.loads(response_text)
+    result = {}
+    for item in response_json:
+        for elements in item["payload"]["competitionsWithEvents"]:
+            if elements["competition"]["sportName"] == "Футбол":
+                for events in elements["events"]:
+                    result[events["name"]] = {}
+                    result[events["name"]]["id"] = events["id"]
+                    result[events["name"]]["team1Name"] = events["team1Name"]
+                    result[events["name"]]["team2Name"] = events["team2Name"]
+                    for outcome in events["outcomes"]:
+                        if outcome["shortName"] == "П1":
+                            result[events["name"]]["team1Score"] = float(
+                                outcome["probability"]
+                            )
+                        if outcome["shortName"] == "П2":
+                            result[events["name"]]["team2Score"] = float(
+                                outcome["probability"]
+                            )
+                        if outcome["shortName"] == "Х":
+                            result[events["name"]]["draw"] = float(
+                                outcome["probability"]
+                            )
+    return result
