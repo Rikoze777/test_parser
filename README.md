@@ -40,3 +40,4 @@ python3 main.py
 ## Результат
 
 После завершения скрипта вы увидите сообщение "Matches fetched successfully", а также будет создан файл [bets.log](bets.log) в корне проекта, где вы можете увидеть все результаты.
+![изображение](https://github.com/Rikoze777/test_parser/assets/61386361/6d830a84-a660-4e5a-b71d-261c0968df9c)
